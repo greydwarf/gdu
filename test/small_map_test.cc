@@ -1,4 +1,4 @@
-#include "gdu/container/small_map.h"
+#include "gdu/small_map.h"
 #include <string>
 #include <iostream>
 
@@ -10,7 +10,7 @@ void expect_eq(const T& a, const T& b, const std::string& msg) {
 }
 
 void test_construction() {
-   gdu::container::small_map<int, std::string> m { {7,"hi"}, {3,"thiere"}, {7, "no"}};
+   gdu::small_map<int, std::string> m { {7,"hi"}, {3,"thiere"}, {7, "no"}};
    expect_eq(m.v_.size(), 2UL, "size");
    expect_eq(m.v_[0], std::make_pair(3, std::string("thiere")), "element 1");
    expect_eq(m.v_[1], std::make_pair(7, std::string("hi")), "element 2");
@@ -19,14 +19,14 @@ void test_construction() {
 void test_find() {
    auto el1 = std::make_pair<int, std::string>(3, std::string("test1"));
    auto el2 = std::make_pair<int, std::string>(7, std::string("hi"));
-   gdu::container::small_map<int, std::string> m { el2, el1};
+   gdu::small_map<int, std::string> m { el2, el1};
    expect_eq(*m.find(7), el2, "find second");
    expect_eq(*m.find(3), el1, "find first");
    expect_eq(m.find(6), m.cend(), "find unknown");
 }
 
 void test_subscript() {
-   gdu::container::small_map<int, std::string> m;
+   gdu::small_map<int, std::string> m;
    m[7] = "hi";
    m[3] = "test1";
    expect_eq(m[7], std::string("hi"), "find second");
@@ -39,7 +39,7 @@ void test_subscript() {
 }
 
 void test_emplace() {
-   gdu::container::small_map<int, std::string> m;
+   gdu::small_map<int, std::string> m;
    m.emplace(7, "hi");
    m.emplace(3, "test1");
    expect_eq(m.size(), 2UL, "size (2)");
@@ -51,7 +51,7 @@ void test_emplace() {
 }
 
 void test_small_insert() {
-   gdu::container::small_map<int, std::string> m{{7,"hi"},{3,"there"}};
+   gdu::small_map<int, std::string> m{{7,"hi"},{3,"there"}};
    std::vector<std::pair<int, std::string>> c {{3, "hey"}, {10,"add"}};
    m.insert(c.begin(), c.end());
    expect_eq(m[3], std::string("hey"), "replace");
@@ -61,7 +61,7 @@ void test_small_insert() {
 }
 
 void test_mass_insert() {
-   gdu::container::small_map<int, std::string> m{{37,"hi"},{3,"there"}};
+   gdu::small_map<int, std::string> m{{37,"hi"},{3,"there"}};
    std::vector<std::pair<int, std::string>> c;
    for (int ii=0; ii < 20; ii++) c.emplace_back(ii, std::to_string(ii));
    m.insert(c.begin(), c.end());
@@ -72,7 +72,7 @@ void test_mass_insert() {
 }
 
 int main() {
-   gdu::container::small_map<int, std::string> m;
+   gdu::small_map<int, std::string> m;
    test_construction();
    test_find();
    test_subscript();

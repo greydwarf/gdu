@@ -3,8 +3,8 @@
 #include <functional>
 #include <memory>
 
-namespace gdu { namespace container {
-//! gdu::container::small_map is an exercise I wrote to learn about implementing containers in C++14.
+namespace gdu {
+//! gdu::small_map is an exercise I wrote to learn about implementing containers in C++14.
 //! It hasn't been tested operationally.  If you really want to use something like this, I suggest
 //! using boost's flat_map instead.  That has been tested, and likely has far fewer bugs than this
 //! implementation, which will likely cause you no end of grief.  Really, don't use this.
@@ -192,4 +192,4 @@ private:
    }
 };
       
-}}
+}
