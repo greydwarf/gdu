@@ -1,83 +1,69 @@
+#define private public
 #include "gdu/small_map.h"
+#undef private
+
 #include <string>
 #include <iostream>
+#include "gtest/gtest.h"
 
-template<typename T> 
-void expect_eq(const T& a, const T& b, const std::string& msg) {
-   if (a != b) {
-      std::cerr << "Error," << msg << "\n";
-   }
-}
-
-void test_construction() {
+TEST(small_map, construction) {
    gdu::small_map<int, std::string> m { {7,"hi"}, {3,"thiere"}, {7, "no"}};
-   expect_eq(m.v_.size(), 2UL, "size");
-   expect_eq(m.v_[0], std::make_pair(3, std::string("thiere")), "element 1");
-   expect_eq(m.v_[1], std::make_pair(7, std::string("hi")), "element 2");
+   EXPECT_EQ( 2UL,m.v_.size());
+   EXPECT_EQ( std::make_pair(3, std::string("thiere")), m.v_[0]);
+   EXPECT_EQ( std::make_pair(7, std::string("hi")), m.v_[1]);
 }
 
-void test_find() {
+TEST(small_map, find) {
    auto el1 = std::make_pair<int, std::string>(3, std::string("test1"));
    auto el2 = std::make_pair<int, std::string>(7, std::string("hi"));
    gdu::small_map<int, std::string> m { el2, el1};
-   expect_eq(*m.find(7), el2, "find second");
-   expect_eq(*m.find(3), el1, "find first");
-   expect_eq(m.find(6), m.cend(), "find unknown");
+   EXPECT_EQ( el2, *m.find(7));
+   EXPECT_EQ( el1, *m.find(3));
+   EXPECT_EQ( m.cend(), m.find(6));
 }
 
-void test_subscript() {
+TEST(small_map, subscript) {
    gdu::small_map<int, std::string> m;
    m[7] = "hi";
    m[3] = "test1";
-   expect_eq(m[7], std::string("hi"), "find second");
-   expect_eq(m[3], std::string("test1"), "find first");
-   expect_eq(m[6], std::string(), "find unknown");
+   EXPECT_EQ( std::string("hi"), m[7]);
+   EXPECT_EQ( std::string("test1"), m[3]);
+   EXPECT_EQ( std::string(), m[6]);
    m[6]=std::string("update");
-   expect_eq(m[6], std::string("update"), "update");
+   EXPECT_EQ( std::string("update"), m[6]);
    m[7]=std::string("another update");
-   expect_eq(m[7], std::string("another update"), "find second after update");
+   EXPECT_EQ( std::string("another update"), m[7]);
 }
 
-void test_emplace() {
+TEST(small_map, emplace) {
    gdu::small_map<int, std::string> m;
    m.emplace(7, "hi");
    m.emplace(3, "test1");
-   expect_eq(m.size(), 2UL, "size (2)");
-   expect_eq(m[3], std::string("test1"), "find first");
-   expect_eq(m[7], std::string("hi"), "find second");
+   EXPECT_EQ( 2UL, m.size());
+   EXPECT_EQ( std::string("test1"), m[3]);
+   EXPECT_EQ( std::string("hi"), m[7]);
    m.emplace(7, "update");
-   expect_eq(m[7], std::string("update"), "find second (updated)");
-   expect_eq(m.size(), 2UL, "size (2)");
+   EXPECT_EQ( std::string("update"), m[7]);
+   EXPECT_EQ( 2UL, m.size());
 }
 
-void test_small_insert() {
+TEST(small_map, small_insert) {
    gdu::small_map<int, std::string> m{{7,"hi"},{3,"there"}};
    std::vector<std::pair<int, std::string>> c {{3, "hey"}, {10,"add"}};
    m.insert(c.begin(), c.end());
-   expect_eq(m[3], std::string("hey"), "replace");
-   expect_eq(m[7], std::string("hi"), "original");
-   expect_eq(m[10], std::string("add"), "added");
-   expect_eq(m.size(), 3UL, "size");
+   EXPECT_EQ( std::string("hey"), m[3]);
+   EXPECT_EQ( std::string("hi"), m[7]);
+   EXPECT_EQ( std::string("add"), m[10]);
+   EXPECT_EQ( 3UL, m.size());
 }
 
-void test_mass_insert() {
+TEST(small_map, mass_insert) {
    gdu::small_map<int, std::string> m{{37,"hi"},{3,"there"}};
    std::vector<std::pair<int, std::string>> c;
    for (int ii=0; ii < 20; ii++) c.emplace_back(ii, std::to_string(ii));
    m.insert(c.begin(), c.end());
-   expect_eq(m[3], std::string("3"), "replace");
-   expect_eq(m[37], std::string("hi"), "original");
-   expect_eq(m[10], std::string("10"), "added");
-   expect_eq(m.size(), 21UL, "size");
+   EXPECT_EQ( std::string("3"), m[3]);
+   EXPECT_EQ( std::string("hi"), m[37]);
+   EXPECT_EQ( std::string("10"), m[10]);
+   EXPECT_EQ( 21UL, m.size());
 }
-
-int main() {
-   gdu::small_map<int, std::string> m;
-   test_construction();
-   test_find();
-   test_subscript();
-   test_emplace();
-   test_small_insert();
-   test_mass_insert();
-}
-
