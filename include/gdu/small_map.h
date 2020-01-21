@@ -134,7 +134,7 @@ public:
       if (it != end() && !Less()(key, it->first)) {
          it->second = value;
       } else {
-         auto x = v_.emplace(it, key, value);
+         v_.emplace(it, key, value);
       }
       return it;
    }

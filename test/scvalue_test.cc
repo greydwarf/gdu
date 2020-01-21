@@ -4,8 +4,25 @@
 
 #include "gtest/gtest.h"
 using namespace gdu;
-TEST(SVAlue, as_int8) {
-   SCValue val;
-   val.set_int(12);
-   EXPECT_EQ(static_cast<int8_t>(12), val.as<int8_t>());
+TEST(SCValue, as_int) {
+   SCValue val(12);
+   EXPECT_EQ(12, val.as_int());
+
+   SCValue unset;
+   EXPECT_THROW(unset.as_int(), std::invalid_argument);
+   EXPECT_EQ(12, unset.as_int(12));
+
+   SCValue fval(3.1415);
+   EXPECT_EQ(3, fval.as_int());
+}
+TEST(SCValue, as_double) {
+   SCValue val(12);
+   EXPECT_EQ(static_cast<double>(12), val.as_float());
+
+   SCValue unset;
+   EXPECT_THROW(unset.as_float(), std::invalid_argument);
+   EXPECT_EQ(12, unset.as_float(12));
+
+   SCValue fval(3.1415);
+   EXPECT_NEAR(3.1415, fval.as_float(), 0.001);
 }

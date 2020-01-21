@@ -9,24 +9,16 @@ namespace gdu {
       INT,
       FLOAT,
       STRING,
-      TIME,
+      DATE,
       BOOL,
       OBJECT,
       ARRAY,
       NIL
    };
 
-   class SCValue;
-   template <typename T>
-   class as_helper { 
-   public:
-      static T as(const SCValue& v);
-      static T as(const SCValue& v, const T& def);
-   };
-
    class SCValue {
-      template<typename T> friend class as_helper;
    private:
+      SCType type_;
       union {
          int64_t int_val_;
          double  float_val_;
@@ -35,60 +27,125 @@ namespace gdu {
          std::unordered_map<std::string, std::unique_ptr<SCValue>>* obj_ptr_;
          std::vector<std::unique_ptr<SCValue>>* array_ptr_;
       };
-      SCType type_;
       std::string text_;
    public:
+      // Right I have these as implicit.  That might change...
+      SCValue(): type_(SCType::NIL) {}
+      SCValue(int64_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(int32_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(int16_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(int8_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(uint64_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(uint32_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(uint16_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(uint8_t val):type_(SCType::INT),int_val_(val) { }
+      SCValue(double val):type_(SCType::FLOAT),float_val_(val) { }
+      SCValue(bool val):type_(SCType::BOOL),bool_val_(val) { }
+
+      // This is a horrible hack, but there it is...
+      SCValue(int64_t val, bool):type_(SCType::DATE),date_val_(val) { }
+
       SCType type() const {
          return type_;
       }
-      template <typename T> T as() {
-         return as_helper<T>::as(*this);
+
+      bool is_valid() const {
+         return type_ == SCType::NIL;
       }
-   private:
-      void set_int(int64_t val) {
-         type_ = SCType::INT;
-         int_val_ = val;
+
+      bool is_bool() const {
+         return type_ == SCType::BOOL;
+      }
+
+      bool is_int() const {
+         return type_ == SCType::INT;
+      }
+
+      bool is_float() const {
+         return type_ == SCType::FLOAT;
+      }
+
+      bool is_date() const {
+         return type_ == SCType::DATE;
+      }
+
+      int64_t as_int() const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::NIL)
+            throw std::invalid_argument("as(): value unset");
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to an int");
+      }
+
+      int64_t as_int(int64_t def) const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::NIL)
+            return def;
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to an int");
+      }
+
+      double as_float() const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::NIL)
+            throw std::invalid_argument("as(): value unset");
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to an float");
+      }
+
+      double as_float(double def) const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::NIL)
+            return def;
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to an float");
+      }
+
+      int64_t as_date() const {
+         if (type_ == SCType::DATE) return date_val_;
+         else if (type_ == SCType::NIL)
+            throw std::invalid_argument("as(): value unset");
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to a date");
+      }
+
+      int64_t as_date(int64_t def) const {
+         if (type_ == SCType::DATE) return date_val_;
+         else if (type_ == SCType::NIL)
+            return def;
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to a date");
+      }
+
+      bool as_bool() const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::BOOL) return bool_val_;
+         else if (type_ == SCType::NIL)
+            throw std::invalid_argument("as(): value unset");
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to a bool");
+      }
+
+      double as_bool(double def) const {
+         if (type_ == SCType::INT) return int_val_;
+         else if (type_ == SCType::BOOL) return bool_val_;
+         else if (type_ == SCType::NIL)
+            return def;
+         else
+            throw std::invalid_argument(
+               "as(): type could not be converted to a bool");
       }
    };
-
-#ifdef GDU_SCVALUE_AS_INT_T97XF5AS
-#  error GDU_SCVALUE_AS_INT_T97XF5AS Must be Undefined
-#endif
-
-#define GDU_SCVALUE_AS_INT_T97XF5AS(NUM_TYPE)                   \
-   template <> class as_helper<NUM_TYPE> {                      \
-   public:                                                      \
-      static NUM_TYPE as(const SCValue& v) {                          \
-         if (v.type_ == SCType::INT) return v.int_val_;             \
-         else if (v.type_ == SCType::FLOAT) return v.float_val_;    \
-         else if (v.type_ == SCType::NIL)                         \
-            throw std::invalid_argument("as(): value unset");   \
-         else                                                   \
-            throw std::invalid_argument(                        \
-               "as(): type could not be converted to an int");  \
-      }                                                         \
-      static NUM_TYPE as(const SCValue& v, const NUM_TYPE& def) {       \
-         if (v.type_ == SCType::INT) return v.int_val_;             \
-         else if (v.type_ == SCType::FLOAT) return v.float_val_;    \
-         else if (v.type_ == SCType::NIL)                         \
-            return def;                                         \
-         else                                                   \
-            throw std::invalid_argument(                        \
-               "as(): type could not be converted to an int");  \
-      }                                                         \
-   }
-   
-GDU_SCVALUE_AS_INT_T97XF5AS(int8_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(uint8_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(int16_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(uint16_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(int32_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(uint32_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(int64_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(uint64_t);
-GDU_SCVALUE_AS_INT_T97XF5AS(double);
-GDU_SCVALUE_AS_INT_T97XF5AS(float);
-
-#undef GDU_SCVALUE_AS_INT_T97XF5AS
 }
 #endif /* end of include guard: SC_VALUE_H_T97XF5AS */

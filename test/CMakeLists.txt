@@ -8,7 +8,9 @@ macro(package_add_test TESTNAME)
         PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
     )
     set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
+    set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
+    target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra)
 endmacro()
 
 package_add_test(small_map_test small_map_test.cc)
-package_add_test(simple_config scvalue_test.cc)
+package_add_test(simple_config scvalue_test.cc scparse_test.cc)
