@@ -2,6 +2,7 @@
 #define SC_PARSER_H_URAIWD6Y
 
 #include "gdu/simple_config.h"
+#include "gdu/simple_config/parse_error.h"
 namespace gdu {
    class SCParser {
    public:
@@ -20,7 +21,12 @@ namespace gdu {
       void parse();
       bool parse_statement();
       std::string parse_key();
+      gdu::SCValue parse_value();
       std::string expect_word_token();
+      bool expect_equals_token();
+      bool expect_semi_token();
+      bool expect_int_token(int64_t& val);
+      bool expect_double_token(double& val);
       void skip_whitespace();
    };
 }
@@ -47,20 +53,50 @@ void gdu::SCParser::parse() {
 // EBNF:
 // statement: key EQUALS value SEMI
 bool gdu::SCParser::parse_statement() {
+   skip_whitespace();
+   if (processed_ == str_.size()) return false;
    std::string key = parse_key();
+   skip_whitespace();
+   bool has_equals = expect_equals_token();
+   if (!has_equals) {
+      throw gdu::parse_error(line_, offset_, "'='", "");
+   }
+   skip_whitespace();
+   gdu::SCValue val = parse_value();
+   skip_whitespace();
+   bool has_semi = expect_semi_token();
+   if (!has_semi) {
+      throw gdu::parse_error(line_, offset_, "';'", "");
+   }
    return processed_ != str_.size();
 }
 
 // EBNF:
-// statement: key EQUALS value SEMI
+// key: WORD | STRING
 std::string gdu::SCParser::parse_key() {
-   skip_whitespace();
-   if (processed_ == str_.size()) return "";
    std::string key = expect_word_token();
    if (key.empty()) {
-      throw std::runtime_error("key expected");
+      throw gdu::parse_error(line_, offset_, "key", "");
    }
    return key;
+}
+
+// EBNF:
+// value: STRING | INT | DOUBLE | DATE | BOOL | array | object
+gdu::SCValue gdu::SCParser::parse_value() {
+   if (processed_ == str_.size()) {
+      throw gdu::parse_error(line_, offset_, "value", "end of file");
+   }
+   if (isdigit(str_[processed_])) {
+      double d;
+      int64_t i;
+      if (expect_double_token(d)) {
+         return gdu::SCValue(d);
+      } else if (expect_int_token(i)) {
+         return gdu::SCValue(i);
+      }
+   } 
+   throw gdu::parse_error(line_, offset_, "value", "");
 }
 
 std::string gdu::SCParser::expect_word_token() {
@@ -76,8 +112,57 @@ std::string gdu::SCParser::expect_word_token() {
    return "";
 }
 
+bool gdu::SCParser::expect_int_token(int64_t&val) {
+   static const std::regex int_re("((\\d+)([KMGsmhd])?");
+   std::cmatch m;
+   if (std::regex_search(str_.c_str()+processed_, m, int_re, 
+         std::regex_constants::match_continuous) &&
+      m.size() >= 2) {
+
+      size_t sz = m[1].str().size();
+      processed_ += sz;
+      offset_ += sz;
+      val = std::strtol(m[1].str().c_str(), nullptr, 10);
+      return true;
+   }
+   return false;
+}
+
+bool gdu::SCParser::expect_double_token(double& val) {
+   static const std::regex int_re("(\\d+)([KMGsmhd])?");
+   std::cmatch m;
+   if (std::regex_search(str_.c_str()+processed_, m, int_re, 
+         std::regex_constants::match_continuous) &&
+      m.size() >= 2) {
+
+      size_t sz = m[1].str().size();
+      processed_ += sz;
+      offset_ += sz;
+      val = std::strtod(m[1].str().c_str(), nullptr);
+   }
+   return "";
+}
+
+bool gdu::SCParser::expect_equals_token() {
+   if (processed_ == str_.size() || str_[processed_] != '=') {
+      return false;
+   }
+   processed_++;
+   offset_++;
+   return true;
+}
+
+bool gdu::SCParser::expect_semi_token() {
+   if (processed_ == str_.size() || str_[processed_] != ';') {
+      return false;
+   }
+   processed_++;
+   offset_++;
+   return true;
+}
+
 void gdu::SCParser::skip_whitespace() {
-   while (isspace(str_[processed_] )) {
+   while (processed_ < str_.size() && isspace(str_[processed_] )) {
       if (str_[processed_] == '\n') {
          offset_ = 1;
          line_ ++;
