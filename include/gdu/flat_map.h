@@ -4,23 +4,23 @@
 #include <memory>
 
 namespace gdu {
-//! gdu::small_map is an exercise I wrote to learn about implementing containers in C++14.
+//! gdu::flat_map is an exercise I wrote to learn about implementing containers in C++14.
 //! It hasn't been tested operationally.  If you really want to use something like this, I suggest
 //! using boost's flat_map instead.  That has been tested, and likely has far fewer bugs than this
 //! implementation, which will likely cause you no end of grief.  Really, don't use this.
 //!
-//! A small_map is an associative container that is optimized for only a few entries (less than 30).
+//! A flat_map is an associative container that is optimized for only a few entries (less than 30).
 //! It supports unique keys (contains at most one of each key value) and provides for fast retrieval 
 //! of values of another type T based on the keys.
 //!
-//! A small_map satisfies most of the requirements of a container, a reversible
-//! container and an associative container. A small_map also provides most operations described 
-//! for unique keys. For a small_map<Key,T> the key_type is Key and the value_type is 
+//! A flat_map satisfies most of the requirements of a container, a reversible
+//! container and an associative container. A flat_map also provides most operations described 
+//! for unique keys. For a flat_map<Key,T> the key_type is Key and the value_type is 
 //! std::pair<Key,T> (unlike std::map<Key, T> which value_type is std::pair<<b>const</b> Key, T>).
 //!
-//! small_map is similar to std::map but it's implemented using a vector instead of a binary tree.
+//! flat_map is similar to std::map but it's implemented using a vector instead of a binary tree.
 //!
-//! Using a sequential sequence container means that inserting a new element into a small_map invalidates
+//! Using a sequential sequence container means that inserting a new element into a flat_map invalidates
 //! previous iterators and references.  Similarly, erasing an invalidates iterators and 
 //! references pointing to elements that come after the erased element.
 //!
@@ -33,7 +33,7 @@ namespace gdu {
 template <typename K, typename V, 
          class Less = std::less<K>,
          class Alloc = std::allocator<std::pair<K,V>>> 
-class small_map {
+class flat_map {
 public:
    using key_type = K;
    using mapped_type=V;
@@ -51,16 +51,17 @@ public:
    using difference_type=typename std::iterator_traits<const_iterator>::difference_type;
    using size_type=typename std::vector<value_type>::size_type;
 
-   //! <b>Effects</b>: Default constructs an empty small_map.
+   //! <b>Effects</b>: Default constructs an empty flat_map.
    //!
    //! <b>Complexity</b>: Constant.
-   small_map() = default;
+   flat_map() = default;
 
-   //! <b>Effects</b>: Constructs an empty small_map and inserts elements from the 
+   //! <b>Effects</b>: Constructs an empty flat_map and inserts elements from the 
    //! initailizer_list of key/value pairs. This function
-   //! is more efficient than default-creating the small_map and then inserting each entry separately.
+   //! is more efficient than default-creating the flat_map and then inserting 
+   //! each entry separately.
    //!
-   small_map(std::initializer_list<value_type> list) : v_(list) {
+   flat_map(std::initializer_list<value_type> list) : v_(list) {
       std::sort(std::begin(v_), std::end(v_), key_comp);
       auto it = std::unique(v_.begin(), v_.end(), 
                             [](const value_type& a, const value_type& b) { 
@@ -68,19 +69,29 @@ public:
                             });
       v_.resize(std::distance(v_.begin(), it));
    }
-   small_map(const small_map<K,V,Less,Alloc>& other) = default;
-   ~small_map() = default;
 
-   small_map(small_map<K,V, Less,Alloc>&& other) noexcept
+   flat_map(std::vector<value_type>& list) : v_(list) {
+      std::sort(std::begin(v_), std::end(v_), key_comp);
+      auto it = std::unique(v_.begin(), v_.end(), 
+                            [](const value_type& a, const value_type& b) { 
+                              return a.first == b.first; 
+                            });
+      v_.resize(std::distance(v_.begin(), it));
+   }
+
+   flat_map(const flat_map<K,V,Less,Alloc>& other) = default;
+   ~flat_map() = default;
+
+   flat_map(flat_map<K,V, Less,Alloc>&& other) noexcept
       : v_(std::move(other.v_))
            {}
 
-   small_map& operator=(const small_map<K,V, Less,Alloc>& other) {
+   flat_map& operator=(const flat_map<K,V, Less,Alloc>& other) {
       v_ = other.v_;
       return *this;
    }
 
-   small_map& operator=(small_map<K,V, Less,Alloc>&& other) noexcept {
+   flat_map& operator=(flat_map<K,V, Less,Alloc>&& other) noexcept {
       std::swap(v_, other.v_);
       return *this;
    }
@@ -161,8 +172,9 @@ public:
       return x->second;
    }
 
-   std::vector<value_type,Alloc> v_;
 private:
+   std::vector<value_type,Alloc> v_;
+
    static bool key_comp(const value_type& el1, const value_type& el2) {
       return Less()(el1.first, el2.first);
    }
