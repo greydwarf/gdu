@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_library(gdu INTERFACE)
+add_subdirectory(src)
 target_include_directories(gdu INTERFACE include)
 enable_testing()
 include(GoogleTest)

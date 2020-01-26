@@ -61,7 +61,7 @@ public:
    //! is more efficient than default-creating the flat_map and then inserting 
    //! each entry separately.
    //!
-   flat_map(std::initializer_list<value_type> list) : v_(list) {
+   explicit flat_map(std::initializer_list<value_type> list) : v_(list) {
       std::sort(std::begin(v_), std::end(v_), key_comp);
       auto it = std::unique(v_.begin(), v_.end(), 
                             [](const value_type& a, const value_type& b) { 
@@ -70,7 +70,7 @@ public:
       v_.resize(std::distance(v_.begin(), it));
    }
 
-   flat_map(std::vector<value_type>& list) : v_(list) {
+   explicit flat_map(std::vector<value_type>& list) : v_(list) {
       std::sort(std::begin(v_), std::end(v_), key_comp);
       auto it = std::unique(v_.begin(), v_.end(), 
                             [](const value_type& a, const value_type& b) { 

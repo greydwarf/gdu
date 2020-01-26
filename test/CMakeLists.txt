@@ -12,5 +12,5 @@ macro(package_add_test TESTNAME)
     target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra)
 endmacro()
 
-package_add_test(flat_map_test flat_map_test.cc)
-package_add_test(simple_config scvalue_test.cc scparse_test.cc)
+package_add_test(flat_map_test test_flat_map.cpp)
+package_add_test(simple_config test_scvalue.cpp test_scparse.cpp test_scobject.cpp)
