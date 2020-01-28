@@ -32,7 +32,7 @@ namespace gdu {
 }
 
 #include <regex>
-gdu::SCObject gdu::SCParser::parse_string(const std::string& str) {
+inline gdu::SCObject gdu::SCParser::parse_string(const std::string& str) {
    SCParser t(str);
    t.parse();
    return t.result_;
@@ -43,7 +43,7 @@ gdu::SCObject gdu::SCParser::parse_string(const std::string& str) {
 // statement: key EQUALS value SEMI
 // key: WORD
 // value: NUMBER
-void gdu::SCParser::parse() {
+inline void gdu::SCParser::parse() {
    bool more = true;
    while (more) {
       more = parse_statement();
@@ -52,7 +52,7 @@ void gdu::SCParser::parse() {
 
 // EBNF:
 // statement: key EQUALS value SEMI
-bool gdu::SCParser::parse_statement() {
+inline bool gdu::SCParser::parse_statement() {
    skip_whitespace();
    if (processed_ == str_.size()) return false;
    std::string key = parse_key();
@@ -74,7 +74,7 @@ bool gdu::SCParser::parse_statement() {
 
 // EBNF:
 // key: WORD | STRING
-std::string gdu::SCParser::parse_key() {
+inline std::string gdu::SCParser::parse_key() {
    std::string key = expect_word_token();
    if (key.empty()) {
       throw gdu::parse_error(line_, offset_, "key", "");
@@ -84,11 +84,11 @@ std::string gdu::SCParser::parse_key() {
 
 // EBNF:
 // value: STRING | INT | DOUBLE | DATE | BOOL | array | object
-gdu::SCValue gdu::SCParser::parse_value() {
+inline gdu::SCValue gdu::SCParser::parse_value() {
    if (processed_ == str_.size()) {
       throw gdu::parse_error(line_, offset_, "value", "end of file");
    }
-   if (isdigit(str_[processed_])) {
+   if (isdigit(str_[processed_]) || str_[processed_] == '+' || str_[processed_] == '-') {
       double d;
       int64_t i;
       if (expect_double_token(d)) {
@@ -100,7 +100,7 @@ gdu::SCValue gdu::SCParser::parse_value() {
    throw gdu::parse_error(line_, offset_, "value", "");
 }
 
-std::string gdu::SCParser::expect_word_token() {
+inline std::string gdu::SCParser::expect_word_token() {
    static const std::regex word_re("(\\w+)");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, word_re, std::regex_constants::match_continuous) &&
@@ -113,8 +113,8 @@ std::string gdu::SCParser::expect_word_token() {
    return "";
 }
 
-bool gdu::SCParser::expect_int_token(int64_t&val) {
-   static const std::regex int_re("((\\d+)([KMGsmhd])?");
+inline bool gdu::SCParser::expect_int_token(int64_t&val) {
+   static const std::regex int_re("([+-]?(\\d+))([KMGsmhd])?");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, int_re, 
          std::regex_constants::match_continuous) &&
@@ -129,8 +129,8 @@ bool gdu::SCParser::expect_int_token(int64_t&val) {
    return false;
 }
 
-bool gdu::SCParser::expect_double_token(double& val) {
-   static const std::regex int_re("(\\d+)([KMGsmhd])?");
+inline bool gdu::SCParser::expect_double_token(double& val) {
+   static const std::regex int_re("^([-+]?[0-9]+\\.[0-9]*([eE][-+]?[0-9]+)?)([KMGsmhd])?");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, int_re, 
          std::regex_constants::match_continuous) &&
@@ -140,11 +140,12 @@ bool gdu::SCParser::expect_double_token(double& val) {
       processed_ += sz;
       offset_ += sz;
       val = std::strtod(m[1].str().c_str(), nullptr);
+      return true;
    }
-   return "";
+   return false;
 }
 
-bool gdu::SCParser::expect_equals_token() {
+inline bool gdu::SCParser::expect_equals_token() {
    if (processed_ == str_.size() || str_[processed_] != '=') {
       return false;
    }
@@ -153,7 +154,7 @@ bool gdu::SCParser::expect_equals_token() {
    return true;
 }
 
-bool gdu::SCParser::expect_semi_token() {
+inline bool gdu::SCParser::expect_semi_token() {
    if (processed_ == str_.size() || str_[processed_] != ';') {
       return false;
    }
@@ -162,7 +163,7 @@ bool gdu::SCParser::expect_semi_token() {
    return true;
 }
 
-void gdu::SCParser::skip_whitespace() {
+inline void gdu::SCParser::skip_whitespace() {
    while (processed_ < str_.size() && isspace(str_[processed_] )) {
       if (str_[processed_] == '\n') {
          offset_ = 1;
