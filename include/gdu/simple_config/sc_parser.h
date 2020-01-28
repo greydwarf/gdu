@@ -1,12 +1,12 @@
 #ifndef SC_PARSER_H_URAIWD6Y
 #define SC_PARSER_H_URAIWD6Y
 
-#include "gdu/simple_config.h"
+#include "gdu/simple_config/sc_object.h"
 #include "gdu/simple_config/parse_error.h"
 namespace gdu {
    class SCParser {
    public:
-      static SimpleConfig parse_string(const std::string& config);
+      static SCObject parse_string(const std::string& config);
 #ifndef SC_TESTING
    private:
 #endif
@@ -14,9 +14,9 @@ namespace gdu {
       size_t line_;
       size_t offset_;
       size_t processed_;
-      SimpleConfig result_;
+      SCObject result_;
 
-      SCParser(const std::string& str): str_(str), line_(1), offset_(0), processed_(0)
+      explicit SCParser(const std::string& str): str_(str), line_(1), offset_(0), processed_(0)
       {}
       void parse();
       bool parse_statement();
@@ -32,7 +32,7 @@ namespace gdu {
 }
 
 #include <regex>
-gdu::SimpleConfig gdu::SCParser::parse_string(const std::string& str) {
+gdu::SCObject gdu::SCParser::parse_string(const std::string& str) {
    SCParser t(str);
    t.parse();
    return t.result_;
@@ -68,6 +68,7 @@ bool gdu::SCParser::parse_statement() {
    if (!has_semi) {
       throw gdu::parse_error(line_, offset_, "';'", "");
    }
+   result_.add( key, val);
    return processed_ != str_.size();
 }
 
