@@ -59,6 +59,21 @@ TEST(SCValue, parse_int) {
    EXPECT_EQ(-5.0, b["key"].as_float());
 }
 
+TEST(SCValue, parse_bool) {
+
+   SCObject a = SCParser::parse_string("key=true;");
+   EXPECT_TRUE(a["key"].is_bool());
+   EXPECT_TRUE(a["key"].as_bool());
+
+   auto b = SCParser::parse_string("key=True;");
+   EXPECT_TRUE(b["key"].is_bool());
+   EXPECT_TRUE(b["key"].as_bool());
+
+   auto c = SCParser::parse_string("key=false;");
+   EXPECT_TRUE(c["key"].is_bool());
+   EXPECT_FALSE(c["key"].as_bool());
+}
+
 TEST(SCValue, parse_float) {
 
    SCObject a = SCParser::parse_string("key=5.0;");

@@ -24,6 +24,7 @@ namespace gdu {
          double  float_val_;
          int64_t date_val_;
          bool    bool_val_;
+         std::string* str_val_;
          std::unordered_map<std::string, std::unique_ptr<SCValue>>* obj_ptr_;
          std::vector<std::unique_ptr<SCValue>>* array_ptr_;
       };
@@ -31,16 +32,17 @@ namespace gdu {
    public:
       // Right I have these as implicit.  That might change...
       SCValue(): type_(SCType::NIL) {}
-      SCValue(int64_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(int32_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(int16_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(int8_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(uint64_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(uint32_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(uint16_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(uint8_t val):type_(SCType::INT),int_val_(val) { }
-      SCValue(double val):type_(SCType::FLOAT),float_val_(val) { }
-      SCValue(bool val):type_(SCType::BOOL),bool_val_(val) { }
+      explicit SCValue(int64_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(int32_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(int16_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(int8_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(uint64_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(uint32_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(uint16_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(uint8_t val):type_(SCType::INT),int_val_(val) { }
+      explicit SCValue(double val):type_(SCType::FLOAT),float_val_(val) { }
+      explicit SCValue(bool val):type_(SCType::BOOL),bool_val_(val) { }
+      explicit SCValue(const std::string& val):type_(SCType::STRING),str_val_(new std::string(val)) { }
 
       // This is a horrible hack, but there it is...
       SCValue(int64_t val, bool):type_(SCType::DATE),date_val_(val) { }

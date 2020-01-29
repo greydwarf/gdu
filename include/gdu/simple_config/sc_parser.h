@@ -27,6 +27,8 @@ namespace gdu {
       bool expect_semi_token();
       bool expect_int_token(int64_t& val);
       bool expect_double_token(double& val);
+      bool expect_bool_token(bool& val);
+      bool expect_string_token(std::string& val);
       void skip_whitespace();
    };
 }
@@ -96,7 +98,12 @@ inline gdu::SCValue gdu::SCParser::parse_value() {
       } else if (expect_int_token(i)) {
          return gdu::SCValue(i);
       }
-   } 
+   } else {
+      bool b;
+      if (expect_bool_token(b)) {
+         return gdu::SCValue(b);
+      } 
+   }
    throw gdu::parse_error(line_, offset_, "value", "");
 }
 
@@ -140,6 +147,22 @@ inline bool gdu::SCParser::expect_double_token(double& val) {
       processed_ += sz;
       offset_ += sz;
       val = std::strtod(m[1].str().c_str(), nullptr);
+      return true;
+   }
+   return false;
+}
+
+inline bool gdu::SCParser::expect_bool_token(bool& val) {
+   static const std::regex int_re("^(true|false)", std::regex_constants::icase);
+   std::cmatch m;
+   if (std::regex_search(str_.c_str()+processed_, m, int_re, 
+         std::regex_constants::match_continuous) &&
+      m.size() >= 2) {
+
+      size_t sz = m[1].str().size();
+      processed_ += sz;
+      offset_ += sz;
+      val = std::tolower(m[1].str()[0]) == 't';
       return true;
    }
    return false;
