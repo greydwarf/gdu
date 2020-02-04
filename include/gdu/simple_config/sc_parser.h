@@ -1,6 +1,8 @@
 #ifndef SC_PARSER_H_URAIWD6Y
 #define SC_PARSER_H_URAIWD6Y
 
+#include <iostream>
+#include <time.h>
 #include "gdu/simple_config/sc_object.h"
 #include "gdu/simple_config/parse_error.h"
 namespace gdu {
@@ -28,7 +30,7 @@ namespace gdu {
       bool expect_int_token(int64_t& val);
       bool expect_double_token(double& val);
       bool expect_bool_token(bool& val);
-      bool expect_string_token(std::string& val);
+      bool expect_date_token(int64_t& val);
       void skip_whitespace();
    };
 }
@@ -95,6 +97,8 @@ inline gdu::SCValue gdu::SCParser::parse_value() {
       int64_t i;
       if (expect_double_token(d)) {
          return gdu::SCValue(d);
+      } else if (expect_date_token(i)) {
+         return gdu::SCValue(i, true);
       } else if (expect_int_token(i)) {
          return gdu::SCValue(i);
       }
@@ -137,9 +141,9 @@ inline bool gdu::SCParser::expect_int_token(int64_t&val) {
 }
 
 inline bool gdu::SCParser::expect_double_token(double& val) {
-   static const std::regex int_re("^([-+]?[0-9]+\\.[0-9]*([eE][-+]?[0-9]+)?)([KMGsmhd])?");
+   static const std::regex float_re("^([-+]?[0-9]+\\.[0-9]*([eE][-+]?[0-9]+)?)([KMGsmhd])?");
    std::cmatch m;
-   if (std::regex_search(str_.c_str()+processed_, m, int_re, 
+   if (std::regex_search(str_.c_str()+processed_, m, float_re, 
          std::regex_constants::match_continuous) &&
       m.size() >= 2) {
 
@@ -153,16 +157,50 @@ inline bool gdu::SCParser::expect_double_token(double& val) {
 }
 
 inline bool gdu::SCParser::expect_bool_token(bool& val) {
-   static const std::regex int_re("^(true|false)", std::regex_constants::icase);
+   static const std::regex bool_re("^(true|false)", std::regex_constants::icase);
    std::cmatch m;
-   if (std::regex_search(str_.c_str()+processed_, m, int_re, 
+   if (std::regex_search(str_.c_str()+processed_, m, bool_re, 
          std::regex_constants::match_continuous) &&
-      m.size() >= 2) {
+      m.size() == 2) {
 
       size_t sz = m[1].str().size();
       processed_ += sz;
       offset_ += sz;
       val = std::tolower(m[1].str()[0]) == 't';
+      return true;
+   }
+   return false;
+}
+
+inline bool gdu::SCParser::expect_date_token(int64_t& val) {
+   static const std::regex 
+      date_re("^((\\d{4}-\\d{2}-\\d{2}+)( \\d{2}:\\d{2}:\\d{2})?)|(\\d{2}:\\d{2}:\\d{2})");
+   std::cmatch m;
+   if (std::regex_search(str_.c_str()+processed_, m, date_re, 
+         std::regex_constants::match_continuous)) {
+
+      struct tm tm = {};
+      if (m[1].length()!=0) {
+         std::string dstr = m[1].str();
+         if (m[3].length()==0) {
+            dstr += " 00:00:00";
+         }
+         if(sscanf(dstr.c_str(), "%d-%d-%d %d:%d:%d", 
+               &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec)!=6) {
+            std::cout << "Weird, failure parsing time\n";
+         }
+      } else {
+         std::string tstr = m[4].str();
+         sscanf(tstr.c_str(),  "%d:%d:%d", &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+         tm.tm_year = 1970; tm.tm_mon = 1; tm.tm_mday = 1;
+      }
+      tm.tm_year -= 1900;
+      tm.tm_mon--;
+      time_t epoch = mktime(&tm);
+      val = epoch;
+
+      processed_ += m[0].length();
+      offset_ += m[0].length();
       return true;
    }
    return false;

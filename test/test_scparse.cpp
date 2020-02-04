@@ -107,3 +107,21 @@ TEST(SCValue, parse_float) {
    EXPECT_EQ(0.051, f["key"].as_float());
 }
 
+TEST(SCValue, parse_date) {
+
+   SCObject a = SCParser::parse_string("key=2010-02-03;");
+   EXPECT_TRUE(a["key"].is_date());
+   time_t t = a["key"].as_date();
+   ASSERT_STREQ("Wed Feb  3 00:00:00 2010\n", ctime(&t));
+
+   SCObject b = SCParser::parse_string("key=2010-02-03 04:05:06;");
+   EXPECT_TRUE(b["key"].is_date());
+   t = b["key"].as_date();
+   ASSERT_STREQ("Wed Feb  3 04:05:06 2010\n", ctime(&t));
+
+   SCObject c = SCParser::parse_string("key=04:05:06;");
+   EXPECT_TRUE(c["key"].is_date());
+   t = c["key"].as_date();
+   ASSERT_STREQ("Thu Jan  1 04:05:06 1970\n", ctime(&t));
+}
+
