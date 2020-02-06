@@ -225,10 +225,22 @@ inline bool gdu::SCParser::expect_semi_token() {
 }
 
 inline void gdu::SCParser::skip_whitespace() {
-   while (processed_ < str_.size() && isspace(str_[processed_] )) {
+   bool in_comment = false;
+   while (processed_ < str_.size()) {
+      if (str_[processed_] == '#') {
+         in_comment = true; 
+         processed_++;
+         offset_++;
+      }
+
+      if (!isspace(str_[processed_])  && !in_comment ) {
+         break;
+      }
+
       if (str_[processed_] == '\n') {
-         offset_ = 1;
-         line_ ++;
+            offset_ = 1;
+            line_ ++;
+            in_comment = false;
       } else {
          offset_++;
       }

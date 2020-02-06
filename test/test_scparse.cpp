@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 using namespace gdu;
 
-TEST(SCValue, parse_whith_whitespace) {
+TEST(SCValue, parse_with_whitespace) {
    std::string t1 = "key=5;";
    SCObject a = SCParser::parse_string(t1);
    EXPECT_TRUE(a["key"].is_int());
@@ -123,5 +123,14 @@ TEST(SCValue, parse_date) {
    EXPECT_TRUE(c["key"].is_date());
    t = c["key"].as_date();
    ASSERT_STREQ("Thu Jan  1 04:05:06 1970\n", ctime(&t));
+}
+
+TEST(SCValue, parse_with_comments) {
+   SCObject a = SCParser::parse_string("#OK, here's a \"comment\"\nkey=5;");
+   EXPECT_EQ(5, a["key"].as_int());
+   SCObject b = SCParser::parse_string("key=5; # Another comment (no newline)");
+   EXPECT_EQ(5, b["key"].as_int());
+   SCObject c = SCParser::parse_string("key=\n#comment in the middle (this parses OK)\n5;");
+   EXPECT_EQ(5, c["key"].as_int());
 }
 
