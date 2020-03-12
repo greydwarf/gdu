@@ -223,7 +223,6 @@ inline bool gdu::SCParser::expect_string_token(std::string& val) {
       for (size_t ii = 0; ii < val.size(); ++ii) {
          if (val[ii] == '\\' && ii+1 != val.size()) {
             switch (val[ii+1]) {
-               case 'n': str.replace()
             }
          }
 
