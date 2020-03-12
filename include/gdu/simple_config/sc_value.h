@@ -71,9 +71,13 @@ namespace gdu {
          return type_ == SCType::DATE;
       }
 
+      bool is_string() const {
+         return type_ == SCType::STRING;
+      }
+
       int64_t as_int() const {
          if (type_ == SCType::INT) return int_val_;
-         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::FLOAT) return static_cast<int64_t>(float_val_);
          else if (type_ == SCType::NIL)
             throw std::invalid_argument("as(): value unset");
          else
@@ -83,7 +87,7 @@ namespace gdu {
 
       int64_t as_int(int64_t def) const {
          if (type_ == SCType::INT) return int_val_;
-         else if (type_ == SCType::FLOAT) return float_val_;
+         else if (type_ == SCType::FLOAT) return static_cast<int64_t>(float_val_);
          else if (type_ == SCType::NIL)
             return def;
          else
@@ -92,7 +96,7 @@ namespace gdu {
       }
 
       double as_float() const {
-         if (type_ == SCType::INT) return int_val_;
+         if (type_ == SCType::INT) return static_cast<double>(int_val_);
          else if (type_ == SCType::FLOAT) return float_val_;
          else if (type_ == SCType::NIL)
             throw std::invalid_argument("as(): value unset");
@@ -102,7 +106,7 @@ namespace gdu {
       }
 
       double as_float(double def) const {
-         if (type_ == SCType::INT) return int_val_;
+         if (type_ == SCType::INT) return static_cast<double>(int_val_);
          else if (type_ == SCType::FLOAT) return float_val_;
          else if (type_ == SCType::NIL)
             return def;
@@ -140,13 +144,17 @@ namespace gdu {
       }
 
       double as_bool(double def) const {
-         if (type_ == SCType::INT) return int_val_;
+         if (type_ == SCType::INT) return static_cast<bool>(int_val_);
          else if (type_ == SCType::BOOL) return bool_val_;
          else if (type_ == SCType::NIL)
             return def;
          else
             throw std::invalid_argument(
                "as(): type could not be converted to a bool");
+      }
+
+      std::string str() const {
+         return *str_val_;
       }
    };
 }

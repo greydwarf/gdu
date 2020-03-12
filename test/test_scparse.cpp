@@ -112,17 +112,40 @@ TEST(SCValue, parse_date) {
    SCObject a = SCParser::parse_string("key=2010-02-03;");
    EXPECT_TRUE(a["key"].is_date());
    time_t t = a["key"].as_date();
-   ASSERT_STREQ("Wed Feb  3 00:00:00 2010\n", ctime(&t));
+   EXPECT_STREQ("Wed Feb  3 00:00:00 2010\n", ctime(&t));
 
    SCObject b = SCParser::parse_string("key=2010-02-03 04:05:06;");
    EXPECT_TRUE(b["key"].is_date());
    t = b["key"].as_date();
-   ASSERT_STREQ("Wed Feb  3 04:05:06 2010\n", ctime(&t));
+   EXPECT_STREQ("Wed Feb  3 04:05:06 2010\n", ctime(&t));
 
    SCObject c = SCParser::parse_string("key=04:05:06;");
    EXPECT_TRUE(c["key"].is_date());
    t = c["key"].as_date();
-   ASSERT_STREQ("Thu Jan  1 04:05:06 1970\n", ctime(&t));
+   EXPECT_STREQ("Thu Jan  1 04:05:06 1970\n", ctime(&t));
+}
+
+TEST(SCValue, parse_str) {
+
+   SCObject a = SCParser::parse_string("key=\"\";");
+   EXPECT_TRUE(a["key"].is_string());
+   std::cout << "'" << a["key"].str() << "'\n";
+   EXPECT_STREQ("", a["key"].str().c_str());
+
+   a = SCParser::parse_string("key=\"hi\";");
+   EXPECT_TRUE(a["key"].is_string());
+   std::cout << "'" << a["key"].str() << "'\n";
+   EXPECT_STREQ("hi", a["key"].str().c_str());
+
+   a = SCParser::parse_string("key=\"hi\\\"\";");
+   EXPECT_TRUE(a["key"].is_string());
+   std::cout << "'" << a["key"].str() << "'\n";
+   EXPECT_STREQ("hi\\\"", a["key"].str().c_str());
+
+   a = SCParser::parse_string("key=\"\\\"\";");
+   EXPECT_TRUE(a["key"].is_string());
+//   EXPECT_STREQ("\"", a["key"].str().c_str());
+
 }
 
 TEST(SCValue, parse_with_comments) {

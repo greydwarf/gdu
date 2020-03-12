@@ -9,7 +9,10 @@ macro(package_add_test TESTNAME)
     )
     set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
     set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
-    target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra)
+    target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor 
+                                               -pedantic -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wconversion
+                                               -Wno-sign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
+                                               -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2)
 endmacro()
 
 package_add_test(test_flat_map test_flat_map.cpp)

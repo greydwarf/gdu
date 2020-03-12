@@ -31,6 +31,7 @@ namespace gdu {
       bool expect_double_token(double& val);
       bool expect_bool_token(bool& val);
       bool expect_date_token(int64_t& val);
+      bool expect_string_token(std::string& val);
       void skip_whitespace();
    };
 }
@@ -101,12 +102,17 @@ inline gdu::SCValue gdu::SCParser::parse_value() {
          return gdu::SCValue(i, true);
       } else if (expect_int_token(i)) {
          return gdu::SCValue(i);
+      } else {
+         throw gdu::parse_error(line_, offset_, "number", "");
       }
    } else {
       bool b;
+      std::string str;
       if (expect_bool_token(b)) {
          return gdu::SCValue(b);
-      } 
+      } else if (expect_string_token(str)) {
+         return gdu::SCValue(str);
+      }
    }
    throw gdu::parse_error(line_, offset_, "value", "");
 }
@@ -199,6 +205,29 @@ inline bool gdu::SCParser::expect_date_token(int64_t& val) {
       time_t epoch = mktime(&tm);
       val = epoch;
 
+      processed_ += m[0].length();
+      offset_ += m[0].length();
+      return true;
+   }
+   return false;
+}
+
+inline bool gdu::SCParser::expect_string_token(std::string& val) {
+   static const std::regex 
+      str_re("\"((([^\"\\\\\n\r]*)(\\\\(\"))?)*)\"");
+   std::cmatch m;
+   if (std::regex_search(str_.c_str()+processed_, m, str_re, 
+         std::regex_constants::match_continuous)) {
+
+      val = m[1].str();
+      for (size_t ii = 0; ii < val.size(); ++ii) {
+         if (val[ii] == '\\' && ii+1 != val.size()) {
+            switch (val[ii+1]) {
+               case 'n': str.replace()
+            }
+         }
+
+      }
       processed_ += m[0].length();
       offset_ += m[0].length();
       return true;

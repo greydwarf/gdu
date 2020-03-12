@@ -67,7 +67,7 @@ public:
                             [](const value_type& a, const value_type& b) { 
                               return a.first == b.first; 
                             });
-      v_.resize(std::distance(v_.begin(), it));
+      v_.resize(static_cast<size_t>((std::distance(v_.begin(), it))));
    }
 
    explicit flat_map(std::vector<value_type>& list) : v_(list) {
@@ -151,8 +151,8 @@ public:
    }
 
    void insert(const_iterator start, const_iterator stop) {
-      int incoming_size = std::distance(start, stop);
-      int cur_size = size();
+      size_t incoming_size = static_cast<size_t>(std::distance(start, stop));
+      size_t cur_size = size();
       
       if (is_mass_insert(cur_size, incoming_size)) {
          mass_insert(start, stop);
@@ -191,7 +191,7 @@ private:
 
    void mass_insert(const_iterator start, const_iterator stop) {
       std::vector<value_type, Alloc> t;
-      t.reserve(std::distance(start, stop)+v_.size());
+      t.reserve(static_cast<size_t>(std::distance(start, stop))+v_.size());
       t.insert(t.end(), start, stop);
       t.insert(t.end(), v_.begin(), v_.end());
       std::sort(std::begin(t), std::end(t), key_comp);
@@ -199,7 +199,7 @@ private:
                             [](const value_type& a, const value_type& b) { 
                               return a.first == b.first; 
                             });
-      t.resize(std::distance(t.begin(), it));
+      t.resize(static_cast<size_t>(std::distance(t.begin(), it)));
       std::swap(v_, t);
    }
 };
