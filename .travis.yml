@@ -1,2 +1,4 @@
+dist: bionic
 language: cpp
+compiler: gcc
 script: mkdir -p build && cd build && cmake .. && make
