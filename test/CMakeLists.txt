@@ -9,10 +9,13 @@ macro(package_add_test TESTNAME)
     )
     set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
     set_target_properties(${TESTNAME} PROPERTIES FOLDER test)
-    target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor 
-                                               -pedantic -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wconversion
-                                               -Wno-sign-conversion -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches
-                                               -Wlogical-op -Wnull-dereference -Wuseless-cast -Wdouble-promotion -Wformat=2)
+    target_compile_options(${TESTNAME} PRIVATE -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Wold-style-cast -Wcast-align 
+                                               -Wunused -Woverloaded-virtual -Wconversion -Wno-sign-conversion -Wmisleading-indentation 
+                                               -Wduplicated-cond -Wduplicated-branches -Wlogical-op -Wnull-dereference -Wuseless-cast 
+                                               -Wdouble-promotion -Wformat=2 -Wstrict-null-sentinel -Wfloat-equal -Wcast-qual 
+                                               -Wzero-as-null-pointer-constant -Wlogical-op -Wimplicit-fallthrough=5 -Wctor-dtor-privacy 
+                                               -Wsuggest-final-types -Wsuggest-final-methods -Wsuggest-override -Wformat-overflow 
+                                               -Wformat-security -Wformat-signedness -Wuseless-cast -Wredundant-decls)
 endmacro()
 
 package_add_test(test_flat_map test_flat_map.cpp)

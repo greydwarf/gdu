@@ -214,8 +214,10 @@ inline bool gdu::SCParser::expect_date_token(int64_t& val) {
 
 inline bool gdu::SCParser::expect_string_token(std::string& val) {
    static const std::regex 
-      str_re("\"((([^\"\\\\\n\r]*)(\\\\(\"))?)*)\"");
+      str_re("\"((([^\"\\\\\n\r]*)(\\\\(\"|\n|\r|\\\\))?)*)\"");
    std::cmatch m;
+   if (str_[processed_] != '"') return false;
+
    if (std::regex_search(str_.c_str()+processed_, m, str_re, 
          std::regex_constants::match_continuous)) {
 
@@ -223,14 +225,20 @@ inline bool gdu::SCParser::expect_string_token(std::string& val) {
       for (size_t ii = 0; ii < val.size(); ++ii) {
          if (val[ii] == '\\' && ii+1 != val.size()) {
             switch (val[ii+1]) {
+               case '\n':
+               case '\r':
+               case '\\':
+               case '"': val.erase(ii, 1); break;
+               default:
+                  throw gdu::parse_error(line_, offset_, "Illegal backslash in string", "");
             }
          }
-
       }
       processed_ += m[0].length();
       offset_ += m[0].length();
       return true;
    }
+   throw gdu::parse_error(line_, offset_, "string", "");
    return false;
 }
 

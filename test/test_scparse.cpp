@@ -129,23 +129,25 @@ TEST(SCValue, parse_str) {
 
    SCObject a = SCParser::parse_string("key=\"\";");
    EXPECT_TRUE(a["key"].is_string());
-   std::cout << "'" << a["key"].str() << "'\n";
    EXPECT_STREQ("", a["key"].str().c_str());
 
    a = SCParser::parse_string("key=\"hi\";");
    EXPECT_TRUE(a["key"].is_string());
-   std::cout << "'" << a["key"].str() << "'\n";
    EXPECT_STREQ("hi", a["key"].str().c_str());
 
    a = SCParser::parse_string("key=\"hi\\\"\";");
    EXPECT_TRUE(a["key"].is_string());
-   std::cout << "'" << a["key"].str() << "'\n";
-   EXPECT_STREQ("hi\\\"", a["key"].str().c_str());
+   EXPECT_STREQ("hi\"", a["key"].str().c_str());
 
-   a = SCParser::parse_string("key=\"\\\"\";");
+   a = SCParser::parse_string("key=\"\\\n\\\"\";");
    EXPECT_TRUE(a["key"].is_string());
-//   EXPECT_STREQ("\"", a["key"].str().c_str());
+   EXPECT_STREQ("\n\"", a["key"].str().c_str());
 
+   a = SCParser::parse_string("key=\"\\\\\";");
+   EXPECT_TRUE(a["key"].is_string());
+   EXPECT_STREQ("\\", a["key"].str().c_str());
+
+   EXPECT_THROW(SCParser::parse_string("key=\"hjh"), gdu::parse_error);
 }
 
 TEST(SCValue, parse_with_comments) {
