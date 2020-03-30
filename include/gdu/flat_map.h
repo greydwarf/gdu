@@ -1,3 +1,6 @@
+#ifndef FLAT_MAP_H_07CZ9KQI
+#define FLAT_MAP_H_07CZ9KQI
+
 #include <vector>
 #include <algorithm>
 #include <functional>
@@ -205,3 +208,5 @@ private:
 };
       
 }
+
+#endif

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <time.h>
+#include "gdu/size.h"
 #include "gdu/simple_config/sc_object.h"
 #include "gdu/simple_config/parse_error.h"
 namespace gdu {
@@ -13,25 +14,25 @@ namespace gdu {
    private:
 #endif
       const std::string& str_;
-      size_t line_;
-      size_t offset_;
-      size_t processed_;
+      ssize_t line_;
+      ssize_t offset_;
+      ssize_t processed_;
       SCObject result_;
 
       explicit SCParser(const std::string& str): str_(str), line_(1), offset_(0), processed_(0)
       {}
       void parse();
-      bool parse_statement();
-      std::string parse_key();
-      gdu::SCValue parse_value();
-      std::string expect_word_token();
-      bool expect_equals_token();
-      bool expect_semi_token();
-      bool expect_int_token(int64_t& val);
-      bool expect_double_token(double& val);
-      bool expect_bool_token(bool& val);
-      bool expect_date_token(int64_t& val);
-      bool expect_string_token(std::string& val);
+      [[nodiscard]] bool parse_statement();
+      [[nodiscard]] std::string parse_key();
+      [[nodiscard]] gdu::SCValue parse_value();
+      [[nodiscard]] std::string expect_word_token();
+      [[nodiscard]] bool expect_equals_token();
+      [[nodiscard]] bool expect_semi_token();
+      [[nodiscard]] bool expect_int_token(int64_t& val);
+      [[nodiscard]] bool expect_double_token(double& val);
+      [[nodiscard]] bool expect_bool_token(bool& val);
+      [[nodiscard]] bool expect_date_token(int64_t& val);
+      [[nodiscard]] bool expect_string_token(std::string& val);
       void skip_whitespace();
    };
 }
@@ -59,7 +60,7 @@ inline void gdu::SCParser::parse() {
 // statement: key EQUALS value SEMI
 inline bool gdu::SCParser::parse_statement() {
    skip_whitespace();
-   if (processed_ == str_.size()) return false;
+   if (processed_ == ssize(str_)) return false;
    std::string key = parse_key();
    skip_whitespace();
    bool has_equals = expect_equals_token();
@@ -74,7 +75,7 @@ inline bool gdu::SCParser::parse_statement() {
       throw gdu::parse_error(line_, offset_, "';'", "");
    }
    result_.add( key, val);
-   return processed_ != str_.size();
+   return processed_ != ssize(str_);
 }
 
 // EBNF:
@@ -90,7 +91,7 @@ inline std::string gdu::SCParser::parse_key() {
 // EBNF:
 // value: STRING | INT | DOUBLE | DATE | BOOL | array | object
 inline gdu::SCValue gdu::SCParser::parse_value() {
-   if (processed_ == str_.size()) {
+   if (processed_ == ssize(str_)) {
       throw gdu::parse_error(line_, offset_, "value", "end of file");
    }
    if (isdigit(str_[processed_]) || str_[processed_] == '+' || str_[processed_] == '-') {
@@ -121,8 +122,8 @@ inline std::string gdu::SCParser::expect_word_token() {
    static const std::regex word_re("(\\w+)");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, word_re, std::regex_constants::match_continuous) &&
-      m.size() >= 2) {
-      size_t sz = m[1].str().size();
+      ssize(m) >= 2) {
+      ssize_t sz = ssize(m[1].str());
       processed_ += sz;
       offset_ += sz;
       return m[1].str();
@@ -135,9 +136,9 @@ inline bool gdu::SCParser::expect_int_token(int64_t&val) {
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, int_re, 
          std::regex_constants::match_continuous) &&
-      m.size() >= 2) {
+      ssize(m) >= 2) {
 
-      size_t sz = m[1].str().size();
+      ssize_t sz = ssize(m[1].str());
       processed_ += sz;
       offset_ += sz;
       val = std::strtol(m[1].str().c_str(), nullptr, 10);
@@ -243,7 +244,7 @@ inline bool gdu::SCParser::expect_string_token(std::string& val) {
 }
 
 inline bool gdu::SCParser::expect_equals_token() {
-   if (processed_ == str_.size() || str_[processed_] != '=') {
+   if (processed_ == ssize(str_) || str_[processed_] != '=') {
       return false;
    }
    processed_++;
@@ -252,7 +253,7 @@ inline bool gdu::SCParser::expect_equals_token() {
 }
 
 inline bool gdu::SCParser::expect_semi_token() {
-   if (processed_ == str_.size() || str_[processed_] != ';') {
+   if (processed_ == ssize(str_) || str_[processed_] != ';') {
       return false;
    }
    processed_++;
@@ -262,7 +263,7 @@ inline bool gdu::SCParser::expect_semi_token() {
 
 inline void gdu::SCParser::skip_whitespace() {
    bool in_comment = false;
-   while (processed_ < str_.size()) {
+   while (processed_ < ssize(str_)) {
       if (str_[processed_] == '#') {
          in_comment = true; 
          processed_++;

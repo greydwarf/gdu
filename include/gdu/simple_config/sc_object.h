@@ -18,9 +18,9 @@ namespace gdu {
 
       SCObject() = default;
       void add(const std::string& key, const SCValue& reference);
-      const SCValue& operator[](const std::string& key) const;
-      const_iterator begin() const;
-      const_iterator end() const;
+      [[nodiscard]] const SCValue& operator[](const std::string& key) const;
+      [[nodiscard]] const_iterator begin() const;
+      [[nodiscard]] const_iterator end() const;
    private:
       flat_map<std::string, SCValue> values_;
    };
