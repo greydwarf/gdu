@@ -9,7 +9,7 @@
 namespace gdu {
    class SCParser {
    public:
-      static SCObject parse_string(const std::string& config);
+      [[nodiscard]] static SCObject parse_string(const std::string& config);
 #ifndef SC_TESTING
    private:
 #endif
@@ -22,17 +22,18 @@ namespace gdu {
       explicit SCParser(const std::string& str): str_(str), line_(1), offset_(0), processed_(0)
       {}
       void parse();
-      [[nodiscard]] bool parse_statement();
-      [[nodiscard]] std::string parse_key();
-      [[nodiscard]] gdu::SCValue parse_value();
+      [[nodiscard]] bool expect_statement(std::string& key, SCValue& value);
+      [[nodiscard]] bool expect_key(std::string& key);
+      [[nodiscard]] bool expect_value(SCValue& val);
       [[nodiscard]] std::string expect_word_token();
       [[nodiscard]] bool expect_equals_token();
       [[nodiscard]] bool expect_semi_token();
-      [[nodiscard]] bool expect_int_token(int64_t& val);
-      [[nodiscard]] bool expect_double_token(double& val);
-      [[nodiscard]] bool expect_bool_token(bool& val);
-      [[nodiscard]] bool expect_date_token(int64_t& val);
-      [[nodiscard]] bool expect_string_token(std::string& val);
+      [[nodiscard]] bool expect_int_token(SCValue& val);
+      [[nodiscard]] bool expect_double_token(SCValue& val);
+      [[nodiscard]] bool expect_bool_token(SCValue& val);
+      [[nodiscard]] bool expect_date_token(SCValue& val);
+      [[nodiscard]] bool expect_string_token(SCValue& val);
+      [[nodiscard]] bool expect_array(SCValue& val);
       void skip_whitespace();
    };
 }
@@ -46,76 +47,82 @@ inline gdu::SCObject gdu::SCParser::parse_string(const std::string& str) {
 
 // EBNF:
 // file: statement* EOF
-// statement: key EQUALS value SEMI
-// key: WORD
-// value: NUMBER
 inline void gdu::SCParser::parse() {
-   bool more = true;
-   while (more) {
-      more = parse_statement();
+   while (true) {
+      std::string key;
+      SCValue val;
+      bool valid = expect_statement(key, val);
+      if (!valid) {
+         break;
+      }
+      result_.add(key, val);
+   }
+   skip_whitespace();
+   if (processed_ != ssize(str_)) {
+      throw gdu::parse_error(line_, offset_, "End of File", "");
    }
 }
 
 // EBNF:
 // statement: key EQUALS value SEMI
-inline bool gdu::SCParser::parse_statement() {
+inline bool gdu::SCParser::expect_statement(std::string& key, SCValue& value) {
    skip_whitespace();
    if (processed_ == ssize(str_)) return false;
-   std::string key = parse_key();
+   if (!expect_key(key)) return false;
+
    skip_whitespace();
    bool has_equals = expect_equals_token();
    if (!has_equals) {
       throw gdu::parse_error(line_, offset_, "'='", "");
    }
    skip_whitespace();
-   gdu::SCValue val = parse_value();
+   if (!expect_value(value)) {
+      throw gdu::parse_error(line_, offset_, "value", "");
+   }
    skip_whitespace();
    bool has_semi = expect_semi_token();
-   if (!has_semi) {
+   if (!has_semi && !value.is_array()) {
       throw gdu::parse_error(line_, offset_, "';'", "");
    }
-   result_.add( key, val);
-   return processed_ != ssize(str_);
+   return true;
 }
 
 // EBNF:
 // key: WORD | STRING
-inline std::string gdu::SCParser::parse_key() {
-   std::string key = expect_word_token();
+inline bool gdu::SCParser::expect_key(std::string& key) {
+   key = expect_word_token();
    if (key.empty()) {
-      throw gdu::parse_error(line_, offset_, "key", "");
+      return false;
    }
-   return key;
+   return true;
 }
 
 // EBNF:
 // value: STRING | INT | DOUBLE | DATE | BOOL | array | object
-inline gdu::SCValue gdu::SCParser::parse_value() {
+inline bool gdu::SCParser::expect_value(SCValue& val) {
    if (processed_ == ssize(str_)) {
       throw gdu::parse_error(line_, offset_, "value", "end of file");
    }
    if (isdigit(str_[processed_]) || str_[processed_] == '+' || str_[processed_] == '-') {
-      double d;
-      int64_t i;
-      if (expect_double_token(d)) {
-         return gdu::SCValue(d);
-      } else if (expect_date_token(i)) {
-         return gdu::SCValue(i, true);
-      } else if (expect_int_token(i)) {
-         return gdu::SCValue(i);
+      if (expect_double_token(val)) {
+         return true;
+      } else if (expect_date_token(val)) {
+         return true;
+      } else if (expect_int_token(val)) {
+         return true;
       } else {
          throw gdu::parse_error(line_, offset_, "number", "");
       }
    } else {
-      bool b;
-      std::string str;
-      if (expect_bool_token(b)) {
-         return gdu::SCValue(b);
-      } else if (expect_string_token(str)) {
-         return gdu::SCValue(str);
+      if (expect_bool_token(val)) {
+         return true;
+      } else if (expect_string_token(val)) {
+         return true;
+      } else if (expect_array(val)) {
+         return true;
       }
    }
-   throw gdu::parse_error(line_, offset_, "value", "");
+   return false;
 }
 
 inline std::string gdu::SCParser::expect_word_token() {
@@ -131,7 +138,7 @@ inline std::string gdu::SCParser::expect_word_token() {
    return "";
 }
 
-inline bool gdu::SCParser::expect_int_token(int64_t&val) {
+inline bool gdu::SCParser::expect_int_token(SCValue& val) {
    static const std::regex int_re("([+-]?(\\d+))([KMGsmhd])?");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, int_re, 
@@ -141,13 +148,14 @@ inline bool gdu::SCParser::expect_int_token(int64_t&val) {
       ssize_t sz = ssize(m[1].str());
       processed_ += sz;
       offset_ += sz;
-      val = std::strtol(m[1].str().c_str(), nullptr, 10);
+      int64_t i = std::strtol(m[1].str().c_str(), nullptr, 10);
+      val = SCValue(i);
       return true;
    }
    return false;
 }
 
-inline bool gdu::SCParser::expect_double_token(double& val) {
+inline bool gdu::SCParser::expect_double_token(SCValue& val) {
    static const std::regex float_re("^([-+]?[0-9]+\\.[0-9]*([eE][-+]?[0-9]+)?)([KMGsmhd])?");
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, float_re, 
@@ -157,13 +165,14 @@ inline bool gdu::SCParser::expect_double_token(double& val) {
       size_t sz = m[1].str().size();
       processed_ += sz;
       offset_ += sz;
-      val = std::strtod(m[1].str().c_str(), nullptr);
+      double d = std::strtod(m[1].str().c_str(), nullptr);
+      val = SCValue(d);
       return true;
    }
    return false;
 }
 
-inline bool gdu::SCParser::expect_bool_token(bool& val) {
+inline bool gdu::SCParser::expect_bool_token(SCValue& val) {
    static const std::regex bool_re("^(true|false)", std::regex_constants::icase);
    std::cmatch m;
    if (std::regex_search(str_.c_str()+processed_, m, bool_re, 
@@ -173,13 +182,14 @@ inline bool gdu::SCParser::expect_bool_token(bool& val) {
       size_t sz = m[1].str().size();
       processed_ += sz;
       offset_ += sz;
-      val = std::tolower(m[1].str()[0]) == 't';
+      bool b = std::tolower(m[1].str()[0]) == 't';
+      val = SCValue(b);
       return true;
    }
    return false;
 }
 
-inline bool gdu::SCParser::expect_date_token(int64_t& val) {
+inline bool gdu::SCParser::expect_date_token(SCValue& val) {
    static const std::regex 
       date_re("^((\\d{4}-\\d{2}-\\d{2}+)( \\d{2}:\\d{2}:\\d{2})?)|(\\d{2}:\\d{2}:\\d{2})");
    std::cmatch m;
@@ -204,7 +214,7 @@ inline bool gdu::SCParser::expect_date_token(int64_t& val) {
       tm.tm_year -= 1900;
       tm.tm_mon--;
       time_t epoch = mktime(&tm);
-      val = epoch;
+      val = SCValue(epoch, 1);
 
       processed_ += m[0].length();
       offset_ += m[0].length();
@@ -213,7 +223,7 @@ inline bool gdu::SCParser::expect_date_token(int64_t& val) {
    return false;
 }
 
-inline bool gdu::SCParser::expect_string_token(std::string& val) {
+inline bool gdu::SCParser::expect_string_token(SCValue& val) {
    static const std::regex 
       str_re("\"((([^\"\\\\\n\r]*)(\\\\(\"|\n|\r|\\\\))?)*)\"");
    std::cmatch m;
@@ -222,14 +232,14 @@ inline bool gdu::SCParser::expect_string_token(std::string& val) {
    if (std::regex_search(str_.c_str()+processed_, m, str_re, 
          std::regex_constants::match_continuous)) {
 
-      val = m[1].str();
-      for (size_t ii = 0; ii < val.size(); ++ii) {
-         if (val[ii] == '\\' && ii+1 != val.size()) {
-            switch (val[ii+1]) {
+      std::string tstr = m[1].str();
+      for (ssize_t ii = 0; ii < ssize(tstr); ++ii) {
+         if (tstr[ii] == '\\' && ii+1 != ssize(tstr)) {
+            switch (tstr[ii+1]) {
                case '\n':
                case '\r':
                case '\\':
-               case '"': val.erase(ii, 1); break;
+               case '"': tstr.erase(ii, 1); break;
                default:
                   throw gdu::parse_error(line_, offset_, "Illegal backslash in string", "");
             }
@@ -237,10 +247,37 @@ inline bool gdu::SCParser::expect_string_token(std::string& val) {
       }
       processed_ += m[0].length();
       offset_ += m[0].length();
+      val = SCValue(tstr);
       return true;
    }
    throw gdu::parse_error(line_, offset_, "string", "");
    return false;
+}
+
+inline bool gdu::SCParser::expect_array(SCValue& val) {
+
+   if (str_[processed_] != '[') return false;
+   processed_++;
+   offset_++;
+   std::vector<SCValue> vec;
+
+   SCValue v;
+   bool valid = expect_value(v);
+   while (valid) {
+      vec.push_back(v);
+      valid = expect_semi_token();
+      if (!valid) break;
+      skip_whitespace();
+      if (!expect_value(v)) {
+         throw gdu::parse_error(line_, offset_, "value", "");
+      }
+   }
+   if (str_[processed_] != ']')
+      throw gdu::parse_error(line_, offset_, "closing bracket", "");
+   processed_++;
+   offset_++;
+   val = SCValue(vec);
+   return true;
 }
 
 inline bool gdu::SCParser::expect_equals_token() {

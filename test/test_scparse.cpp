@@ -36,6 +36,15 @@ TEST(SCValue, parse_with_whitespace) {
    EXPECT_THROW(SCParser::parse_string(t10), gdu::parse_error);
 }
 
+TEST(SCValue, parse_with_comments) {
+   SCObject a = SCParser::parse_string("#OK, here's a \"comment\"\nkey=5;");
+   EXPECT_EQ(5, a["key"].as_int());
+   SCObject b = SCParser::parse_string("key=5; # Another comment (no newline)");
+   EXPECT_EQ(5, b["key"].as_int());
+   SCObject c = SCParser::parse_string("key=\n#comment in the middle (this parses OK)\n5;");
+   EXPECT_EQ(5, c["key"].as_int());
+}
+
 TEST(SCValue, parse_errors) {
    EXPECT_THROW(SCParser::parse_string("%foo"), gdu::parse_error);
    EXPECT_THROW(SCParser::parse_string("   foo"), gdu::parse_error);
@@ -150,12 +159,27 @@ TEST(SCValue, parse_str) {
    EXPECT_THROW(SCParser::parse_string("key=\"hjh"), gdu::parse_error);
 }
 
-TEST(SCValue, parse_with_comments) {
-   SCObject a = SCParser::parse_string("#OK, here's a \"comment\"\nkey=5;");
-   EXPECT_EQ(5, a["key"].as_int());
-   SCObject b = SCParser::parse_string("key=5; # Another comment (no newline)");
-   EXPECT_EQ(5, b["key"].as_int());
-   SCObject c = SCParser::parse_string("key=\n#comment in the middle (this parses OK)\n5;");
-   EXPECT_EQ(5, c["key"].as_int());
+TEST(SCValue, parse_array) {
+   SCObject a = SCParser::parse_string("key=[]");
+   EXPECT_TRUE(a["key"].is_array());
+   a = SCParser::parse_string("key=[];");
+   EXPECT_TRUE(a["key"].is_array());
+
+   a = SCParser::parse_string("key=[123];");
+   EXPECT_TRUE(a["key"].is_array());
+   EXPECT_EQ(1, a["key"].as_array().size());
+   EXPECT_EQ(123, a["key"][0].as_int());
+
+   a = SCParser::parse_string("key=[123; 456];");
+   EXPECT_TRUE(a["key"].is_array());
+   EXPECT_EQ(2, a["key"].as_array().size());
+   EXPECT_EQ(123, a["key"][0].as_int());
+   EXPECT_EQ(456, a["key"][1].as_int());
+
+   a = SCParser::parse_string("key=[123; \"test\"];");
+   EXPECT_TRUE(a["key"].is_array());
+   EXPECT_EQ(2, a["key"].as_array().size());
+   EXPECT_EQ(123, a["key"][0].as_int());
+   EXPECT_STREQ("test", a["key"][1].str().c_str());
 }
 
