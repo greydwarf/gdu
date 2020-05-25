@@ -183,3 +183,38 @@ TEST(SCValue, parse_array) {
    EXPECT_STREQ("test", a["key"][1].str().c_str());
 }
 
+TEST(SCValue, parse_object) {
+   SCObject a = SCParser::parse_string("key={}");
+   EXPECT_TRUE(a["key"].is_object());
+   a = SCParser::parse_string("key={};");
+   EXPECT_TRUE(a["key"].is_object());
+
+   a = SCParser::parse_string("key={t=123;}");
+   EXPECT_TRUE(a["key"].is_object());
+   EXPECT_EQ(1, a["key"].as_object().size());
+   EXPECT_EQ(123, a["key"]["t"].as_int());
+
+   a = SCParser::parse_string("key={t=\"foo\";v=456;};");
+   EXPECT_TRUE(a["key"].is_object());
+   EXPECT_EQ(2, a["key"].as_object().size());
+   EXPECT_STREQ("foo", a["key"]["t"].str().c_str());
+   EXPECT_EQ(456, a["key"]["v"].as_int());
+
+   a = SCParser::parse_string("key=[123; \"test\"];");
+   EXPECT_TRUE(a["key"].is_array());
+   EXPECT_EQ(2, a["key"].as_array().size());
+   EXPECT_EQ(123, a["key"][0].as_int());
+   EXPECT_STREQ("test", a["key"][1].str().c_str());
+}
+
+TEST(SCValue, str_function) {
+   SCObject a = SCParser::parse_string("key=\"test\";");
+   EXPECT_TRUE(a["key"].is_string());
+   EXPECT_STREQ("test", a["key"].str().c_str());
+
+//   a = SCParser::parse_string("key=123;");
+//   EXPECT_TRUE(a["key"].is_int());
+//   EXPECT_STREQ("123", a["key"].str().c_str());
+
+}
+

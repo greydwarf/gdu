@@ -3,9 +3,9 @@
 
 #include <iterator>
 #include "gdu/flat_map.h"
-#include "gdu/simple_config/sc_value.h"
 
 namespace gdu {
+   class SCValue;
    class SCObject {
       using map_type = gdu::flat_map<std::string, SCValue>;
    public:
@@ -21,20 +21,11 @@ namespace gdu {
       [[nodiscard]] const SCValue& operator[](const std::string& key) const;
       [[nodiscard]] const_iterator begin() const;
       [[nodiscard]] const_iterator end() const;
+      [[nodiscard]] size_t size() const;
    private:
       flat_map<std::string, SCValue> values_;
    };
 }
-
-inline void gdu::SCObject::add(const std::string& key, const SCValue& value) {
-   values_.emplace(key, value);
-}
-
-inline const gdu::SCValue& gdu::SCObject::operator[](const std::string& key) const {
-   static const SCValue NIL;
-   auto x = values_.find(key);
-   if (x == values_.end()) return NIL;
-   return x->second;
-}
-
 #endif /* end of include guard: SC_OBJECT_H_5AVALFOS */
+
+#include "gdu/simple_config/sc_object.inl"
