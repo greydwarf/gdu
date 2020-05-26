@@ -189,12 +189,12 @@ TEST(SCValue, parse_object) {
    a = SCParser::parse_string("key={};");
    EXPECT_TRUE(a["key"].is_object());
 
-   a = SCParser::parse_string("key={t=123;}");
+   a = SCParser::parse_string("key={t=123}");
    EXPECT_TRUE(a["key"].is_object());
    EXPECT_EQ(1, a["key"].as_object().size());
    EXPECT_EQ(123, a["key"]["t"].as_int());
 
-   a = SCParser::parse_string("key={t=\"foo\";v=456;};");
+   a = SCParser::parse_string("key={t=\"foo\";v=456};");
    EXPECT_TRUE(a["key"].is_object());
    EXPECT_EQ(2, a["key"].as_object().size());
    EXPECT_STREQ("foo", a["key"]["t"].as_string().c_str());
@@ -207,14 +207,24 @@ TEST(SCValue, parse_object) {
    EXPECT_STREQ("test", a["key"][1].as_string().c_str());
 }
 
-TEST(SCValue, str_function) {
-   SCObject a = SCParser::parse_string("key=\"test\";");
-   EXPECT_TRUE(a["key"].is_string());
-   EXPECT_STREQ("test", a["key"].as_string().c_str());
+TEST(SCValue, nested) {
+   SCObject a = SCParser::parse_string(
+      " k1 = \"test\" ; \n"
+      " k2 = { nested_obj = { n1 = 1 ; n2 = 2 } ;\n"
+      "    nested_arr = [ 1 , 2 , 3 ] } ;\n"
+      " l1 = [ { n1 = 1 ; } ; [ 1 , 2 , 3 ] ] ; \n"
+   );
+   EXPECT_TRUE(a["k1"].is_string());
+   EXPECT_STREQ("test", a["k1"].as_string().c_str());
 
-//   a = SCParser::parse_string("key=123;");
-//   EXPECT_TRUE(a["key"].is_int());
-//   EXPECT_STREQ("123", a["key"].as_string().c_str());
-
+   EXPECT_TRUE(a["k2"].is_object());
+   auto t2 = a["k2"].as_object();
+   EXPECT_EQ(2, t2.size());
+   EXPECT_EQ(1, t2["nested_obj"]["n1"].as_int());
+   EXPECT_EQ(2, t2["nested_obj"]["n2"].as_int());
+   EXPECT_EQ(1, t2["nested_arr"][0].as_int());
+   for (auto x = 0u; x < t2["nested_arr"].as_array().size(); ++x) {
+      EXPECT_EQ(x+1, t2["nested_arr"][x].as_int());
+   }
 }
 

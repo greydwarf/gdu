@@ -27,7 +27,7 @@ namespace gdu {
       [[nodiscard]] bool expect_value(SCValue& val);
       [[nodiscard]] std::string expect_word_token();
       [[nodiscard]] bool expect_equals_token();
-      [[nodiscard]] bool expect_semi_token();
+      [[nodiscard]] bool expect_eos();
       [[nodiscard]] bool expect_int_token(SCValue& val);
       [[nodiscard]] bool expect_double_token(SCValue& val);
       [[nodiscard]] bool expect_bool_token(SCValue& val);

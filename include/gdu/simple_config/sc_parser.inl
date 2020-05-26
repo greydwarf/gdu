@@ -27,21 +27,17 @@ inline void gdu::SCParser::parse() {
 // EBNF:
 // statement: key EQUALS value SEMI
 inline bool gdu::SCParser::expect_statement(std::string& key, SCValue& value) {
-   skip_whitespace();
    if (processed_ == ssize(str_)) return false;
    if (!expect_key(key)) return false;
 
-   skip_whitespace();
    bool has_equals = expect_equals_token();
    if (!has_equals) {
       throw gdu::parse_error(line_, offset_, "'='", "");
    }
-   skip_whitespace();
    if (!expect_value(value)) {
       throw gdu::parse_error(line_, offset_, "value", "");
    }
-   skip_whitespace();
-   bool has_semi = expect_semi_token();
+   bool has_semi = expect_eos();
    if (!has_semi && !value.is_array() && !value.is_object()) {
       throw gdu::parse_error(line_, offset_, "';'", "");
    }
@@ -51,6 +47,7 @@ inline bool gdu::SCParser::expect_statement(std::string& key, SCValue& value) {
 // EBNF:
 // key: WORD | STRING
 inline bool gdu::SCParser::expect_key(std::string& key) {
+   skip_whitespace();
    key = expect_word_token();
    if (key.empty()) {
       return false;
@@ -61,6 +58,7 @@ inline bool gdu::SCParser::expect_key(std::string& key) {
 // EBNF:
 // value: STRING | INT | DOUBLE | DATE | BOOL | array | object
 inline bool gdu::SCParser::expect_value(SCValue& val) {
+   skip_whitespace();
    if (processed_ == ssize(str_)) {
       throw gdu::parse_error(line_, offset_, "value", "end of file");
    }
@@ -225,15 +223,10 @@ inline bool gdu::SCParser::expect_array(SCValue& val) {
    std::vector<SCValue> vec;
 
    SCValue v;
-   bool valid = expect_value(v);
-   while (valid) {
+   while ( bool valid = expect_value(v)) {
       vec.push_back(v);
-      valid = expect_semi_token();
-      if (!valid) break;
+      valid = expect_eos();
       skip_whitespace();
-      if (!expect_value(v)) {
-         throw gdu::parse_error(line_, offset_, "value", "");
-      }
    }
    if (str_[processed_] != ']')
       throw gdu::parse_error(line_, offset_, "closing bracket", "");
@@ -264,6 +257,7 @@ inline bool gdu::SCParser::expect_object(SCValue& val) {
 }
 
 inline bool gdu::SCParser::expect_equals_token() {
+   skip_whitespace();
    if (processed_ == ssize(str_) || str_[processed_] != '=') {
       return false;
    }
@@ -272,13 +266,24 @@ inline bool gdu::SCParser::expect_equals_token() {
    return true;
 }
 
-inline bool gdu::SCParser::expect_semi_token() {
-   if (processed_ == ssize(str_) || str_[processed_] != ';') {
+inline bool gdu::SCParser::expect_eos() {
+   skip_whitespace();
+   if (processed_ == ssize(str_)) {
       return false;
    }
-   processed_++;
-   offset_++;
-   return true;
+
+   // A closing brace or bracket counts as an end of statement, but we do not eat it
+   if (str_[processed_] == ']' || str_[processed_] == '}') {
+      return true;
+   }
+   // Either a comma or a semicolon counts as an end of statement
+   // We do eat it
+   if (str_[processed_] == ';' || str_[processed_] == ',') {
+      processed_++;
+      offset_++;
+      return true;
+   }
+   return false;
 }
 
 inline void gdu::SCParser::skip_whitespace() {
