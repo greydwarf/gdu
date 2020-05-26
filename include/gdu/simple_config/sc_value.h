@@ -74,6 +74,7 @@ namespace gdu {
       int64_t as_int(int64_t def) const;
       double as_float() const;
       double as_float(double def) const;
+      std::string as_string() const;
       int64_t as_date() const;
       int64_t as_date(int64_t def) const;
       bool as_bool() const;
@@ -82,8 +83,6 @@ namespace gdu {
       const ArrayType& as_array() const;
       const SCObject& as_object() const;
       const SCValue& operator[](const std::string& el) const;
-
-      std::string str() const;
    };
 }
 #endif /* end of include guard: SC_VALUE_H_T97XF5AS */

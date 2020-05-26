@@ -262,7 +262,7 @@ inline const gdu::SCValue& gdu::SCValue::operator[](const std::string& el) const
 }
 
 
-inline std::string gdu::SCValue::str() const {
+inline std::string gdu::SCValue::as_string() const {
    return *str_val_;
 }
 #endif /* end of include guard: SC_VALUE_H_7GAVULTZ */
