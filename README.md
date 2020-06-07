@@ -12,9 +12,10 @@ of values of another type T based on the keys.
 A flat_map satisfies most of the requirements of a container, a reversible
 container and an associative container. A flat_map also provides most operations described 
 for unique keys. For a flat_map<Key,T> the key_type is Key and the value_type is 
-std::pair<Key,T> (unlike std::map<Key, T> which value_type is std::pair<<b>const</b> Key, T>).
+std::pair<Key,T> (unlike std::map<Key, T> which value_type is std::pair<**const** Key, T>).
 flat_map is similar to std::map but it's implemented using a vector instead of a binary tree.
 Using a sequential sequence container means that inserting a new element into a flat_map invalidates
 previous iterators and references.  Similarly, erasing an invalidates iterators and 
 references pointing to elements that come after the erased element.
 This container provides random-access iterators.
+## SimpleConfig
