@@ -1,4 +1,5 @@
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/googletest" "external/googletest")
+option(ASAN "Turn on address sanitizer" Off)
 macro(package_add_test TESTNAME)
     add_executable(${TESTNAME} ${ARGN})
     target_link_libraries(${TESTNAME} gdu)
@@ -16,6 +17,10 @@ macro(package_add_test TESTNAME)
                                                -Wzero-as-null-pointer-constant -Wlogical-op -Wimplicit-fallthrough=5 -Wctor-dtor-privacy 
                                                -Wsuggest-final-types -Wsuggest-final-methods -Wsuggest-override -Wformat-overflow 
                                                -Wformat-security -Wformat-signedness -Wuseless-cast -Wredundant-decls)
+    if (ASAN)
+        target_compile_options(${TESTNAME} PRIVATE -fsanitize=address)
+        target_link_libraries(${TESTNAME} "-lasan")
+    endif()
 endmacro()
 
 package_add_test(test_flat_map test_flat_map.cpp)

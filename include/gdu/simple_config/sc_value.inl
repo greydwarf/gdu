@@ -8,7 +8,7 @@ inline gdu::SCValue::SCValue(const SCValue& other): type_(other.type_)
    switch (type_) {
       case SCType::INT: int_val_ = other.int_val_; break;
       case SCType::FLOAT: float_val_ = other.float_val_; break;
-      case SCType::STRING: str_val_ = other.str_val_; break;
+      case SCType::STRING: str_val_ = new std::string(*other.str_val_); break;
       case SCType::DATE: date_val_ = other.date_val_; break;
       case SCType::BOOL: bool_val_ = other.bool_val_; break;
       case SCType::OBJECT: 
@@ -66,7 +66,18 @@ inline gdu::SCValue::SCValue(const SCObject& val):type_(SCType::OBJECT), obj_ptr
 inline gdu::SCValue::SCValue(int64_t val, bool):type_(SCType::DATE),date_val_(val) 
 { }
 inline gdu::SCValue::~SCValue()
-{}
+{
+   switch (type_) {
+      case SCType::OBJECT:
+      delete obj_ptr_; break;
+      case SCType::ARRAY:
+      delete array_ptr_; break;
+      case SCType::STRING:
+      delete str_val_; break;
+      default:
+      break;
+   }
+}
 
 inline gdu::SCValue& gdu::SCValue::operator=(const SCValue& other) {
    if (&other == this) { return *this; }
@@ -77,7 +88,7 @@ inline gdu::SCValue& gdu::SCValue::operator=(const SCValue& other) {
    switch (other.type_) {
       case SCType::INT: int_val_ = other.int_val_; break;
       case SCType::FLOAT: float_val_ = other.float_val_; break;
-      case SCType::STRING: str_val_ = other.str_val_; break;
+      case SCType::STRING: str_val_ = new std::string(*other.str_val_); break;
       case SCType::DATE: date_val_ = other.date_val_; break;
       case SCType::BOOL: bool_val_ = other.bool_val_; break;
       case SCType::OBJECT: 
@@ -95,8 +106,17 @@ inline gdu::SCValue& gdu::SCValue::operator=(const SCValue& other) {
 
 inline gdu::SCValue& gdu::SCValue::operator=(SCValue&& other) {
    if (&other == this) { return *this; }
-   else if (type_ == SCType::OBJECT) { delete obj_ptr_; }
-   else if (type_ == SCType::ARRAY) { delete array_ptr_; }
+
+   switch (type_) {
+      case SCType::OBJECT:
+      delete obj_ptr_; break;
+      case SCType::ARRAY:
+      delete array_ptr_; break;
+      case SCType::STRING:
+      delete str_val_; break;
+      default:
+      break;
+   }
 
    type_ = other.type_;
    switch (other.type_) {
